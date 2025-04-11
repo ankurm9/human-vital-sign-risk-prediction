@@ -13,8 +13,8 @@ Follow these steps to run the app locally:
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/risk-prediction-app.git
-cd risk-prediction-app
+git clone https://github.com/ankurm9/human-vital-sign-risk-prediction.git
+cd human-vital-sign-risk-prediction
 ```
 
 ### 2️⃣ Create Virtual Environment
