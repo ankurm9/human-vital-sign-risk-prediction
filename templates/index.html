@@ -1,21 +1,1352 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-bs-theme="dark">
+
 <head>
-    <title>Patient Risk Prediction</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediPredict - Patient Risk Prediction</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --sidebar-width: 280px;
+            --border-radius: 12px;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bs-body-bg);
+            transition: background-color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            z-index: 1030;
+            background-color: rgba(0, 0, 0, 0.03);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        [data-bs-theme="light"] .sidebar {
+            background-color: rgba(255, 255, 255, 0.7);
+            border-right: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .sidebar-logo {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .nav-link i {
+            width: 24px;
+            text-align: center;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                position: fixed;
+                left: calc(-1 * var(--sidebar-width));
+                height: 100vh;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .content-wrapper {
+                width: 100%;
+            }
+        }
+
+        /* Main Content Styles */
+        .content-wrapper {
+            flex: 1;
+            min-width: 0;
+            padding: 1.5rem;
+        }
+
+        .content-header {
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn {
+            border-radius: var(--border-radius);
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .form-control,
+        .form-select {
+            border-radius: var(--border-radius);
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        [data-bs-theme="light"] .form-control,
+        [data-bs-theme="light"] .form-select {
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+        }
+
+        .form-label {
+            font-weight: 500;
+        }
+
+        /* Risk Indicators */
+        .risk-indicator {
+            height: 150px;
+            width: 150px;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: conic-gradient(var(--primary-color) var(--risk-percent), transparent 0);
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .risk-indicator::before {
+            content: '';
+            position: absolute;
+            height: 120px;
+            width: 120px;
+            border-radius: 50%;
+            background-color: var(--bs-body-bg);
+        }
+
+        .risk-indicator span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .risk-high {
+            color: #dc3545;
+        }
+
+        .risk-medium {
+            color: #fd7e14;
+        }
+
+        .risk-low {
+            color: #198754;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        [data-bs-theme="light"] .theme-toggle {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-bs-theme="light"] .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .was-validated .form-control:valid,
+        .form-control.is-valid {
+            border-color: #198754;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+            padding-right: calc(1.5em + 0.75rem);
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        .was-validated .form-control:invalid,
+        .form-control.is-invalid {
+            border-color: #dc3545;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+            padding-right: calc(1.5em + 0.75rem);
+            background-repeat: no-repeat;
+            background-position: right calc(0.375em + 0.1875rem) center;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        }
+
+        /* Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(155, 155, 155, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(155, 155, 155, 0.8);
+        }
+
+        .card-hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-5px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(5px);
+            }
+        }
+
+        .rotate {
+            animation: rotate 0.5s linear;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #inputSection,
+        #resultSection {
+            transition: opacity 0.3s ease;
+        }
+
+        #resultSection {
+            opacity: 0;
+        }
+    </style>
 </head>
-<body class="container py-5">
-    <h2 class="mb-4">Enter Patient Vitals</h2>
-    <form action="/predict" method="post" class="row g-3">
-        {% for label, name, default in inputs %}
-        <div class="col-md-4">
-            <label for="{{ name }}" class="form-label">{{ label }}</label>
-            <input type="text" class="form-control" name="{{ name }}" id="{{ name }}" value="{{ default }}" required>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar p-4" id="sidebar">
+            <div class="d-flex align-items-center mb-5">
+                <div class="sidebar-logo">
+                    <i class="bi bi-heart-pulse-fill me-2"></i>MediPredict
+                </div>
+                <button class="btn btn-sm btn-link ms-auto d-lg-none" id="closeSidebar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <ul class="nav flex-column mb-5 gap-1">
+                <li class="nav-item">
+                    <a href="#" class="nav-link active">
+                        <i class="bi bi-grid-1x2-fill me-3"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-clipboard2-pulse-fill me-3"></i>
+                        Patient Records
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-graph-up-arrow me-3"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-person-fill me-3"></i>
+                        User Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-gear-fill me-3"></i>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+
+            <div class="mt-auto">
+                <div class="d-flex align-items-center">
+                    <span class="fs-6 fw-medium me-3">Theme</span>
+                    <div class="theme-toggle ms-auto" id="themeToggle">
+                        <i class="bi bi-moon-fill"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar bg-primary bg-opacity-10 text-primary rounded-circle p-2">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fw-medium">Dr. Smith</div>
+                            <div class="small text-muted">Medical Staff</div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Profile</a></li>
+                                <li><a class="dropdown-item" href="#">Settings</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="#">Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        {% endfor %}
-        <div class="col-12">
-            <button type="submit" class="btn btn-primary">Predict Risk</button>
+
+        <!-- Main Content -->
+        <div class="content-wrapper">
+            <div class="d-flex align-items-center mb-4 content-header">
+                <button class="btn btn-outline-secondary me-3 d-lg-none" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h2 class="mb-1">Patient Risk Prediction</h2>
+                    <p class="text-muted mb-0">Analyze patient vitals to predict health risks</p>
+                </div>
+                <div class="ms-auto d-flex">
+                    <button class="btn btn-outline-primary me-2">
+                        <i class="bi bi-question-circle me-2"></i>Help
+                    </button>
+                    <button class="btn btn-primary" id="refreshBtn">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input Form Section -->
+            <div id="inputSection" class="fade-in">
+                <div class="row">
+                    <div class="col-lg-8 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex align-items-center mb-4">
+                                    <i class="bi bi-clipboard-data me-2 text-primary"></i>
+                                    Enter Patient Vitals
+                                </h5>
+                                <form id="predictionForm" class="row g-3" action="/predict" method="post">
+                                    <div class="col-md-6">
+                                        <label for="heart_rate" class="form-label">Heart Rate (BPM)</label>
+                                        <input type="number" class="form-control" id="heart_rate" name="heart_rate"
+                                            value="60" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="resp_rate" class="form-label">Respiratory Rate</label>
+                                        <input type="number" class="form-control" id="resp_rate" name="resp_rate"
+                                            value="12" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="body_temp" class="form-label">Body Temperature (°C)</label>
+                                        <input type="number" step="0.1" class="form-control" id="body_temp"
+                                            name="body_temp" value="36.0" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="oxygen_sat" class="form-label">Oxygen Saturation (%)</label>
+                                        <input type="number" class="form-control" id="oxygen_sat" name="oxygen_sat"
+                                            value="95.0" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="systolic_bp" class="form-label">Blood Pressure (Systolic)</label>
+                                        <input type="number" class="form-control" id="systolic_bp" name="systolic_bp"
+                                            value="110" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="diastolic_bp" class="form-label">Blood Pressure (Diastolic)</label>
+                                        <input type="number" class="form-control" id="diastolic_bp" name="diastolic_bp"
+                                            value="70" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="age" class="form-label">Age</label>
+                                        <input type="number" class="form-control" id="age" name="age" value="18"
+                                            required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="gender" class="form-label">Gender (0=Male, 1=Female)</label>
+                                        <select class="form-select" id="gender" name="gender" required>
+                                            <option value="0">Male</option>
+                                            <option value="1">Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="weight" class="form-label">Weight (kg)</label>
+                                        <input type="number" step="0.1" class="form-control" id="weight" name="weight"
+                                            value="50.0" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="height" class="form-label">Height (m)</label>
+                                        <input type="number" step="0.01" class="form-control" id="height" name="height"
+                                            value="1.5" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="hrv" class="form-label">HRV</label>
+                                        <input type="number" step="0.01" class="form-control" id="hrv" name="hrv"
+                                            value="0.08" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="pulse_pressure" class="form-label">Pulse Pressure</label>
+                                        <input type="number" class="form-control" id="pulse_pressure"
+                                            name="pulse_pressure" value="30" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="bmi" class="form-label">BMI</label>
+                                        <input type="number" step="0.1" class="form-control" id="bmi" name="bmi"
+                                            value="20.3" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="map" class="form-label">MAP</label>
+                                        <input type="number" step="0.1" class="form-control" id="map" name="map"
+                                            value="88.7" required>
+                                    </div>
+                                    <div class="col-12 mt-4">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-calculator me-2"></i>Predict Risk
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary ms-2" id="clearBtn">
+                                            <i class="bi bi-trash me-2"></i>Clear
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex align-items-center mb-4">
+                                    <i class="bi bi-info-circle me-2 text-primary"></i>
+                                    Guidelines
+                                </h5>
+                                <div class="alert alert-primary bg-primary bg-opacity-10 border-0">
+                                    <h6><i class="bi bi-lightbulb me-2"></i>Reference Ranges</h6>
+                                    <ul class="mb-0 ps-3">
+                                        <li><strong>Blood Pressure:</strong> 90-120/60-80 mmHg</li>
+                                        <li><strong>Heart Rate:</strong> 60-100 BPM</li>
+                                        <li><strong>Respiratory Rate:</strong> 12-20 breaths/min</li>
+                                        <li><strong>Temperature:</strong> 36.5-37.5°C</li>
+                                        <li><strong>O₂ Saturation:</strong> 95-100%</li>
+                                        <li><strong>BMI:</strong> 18.5-24.9 kg/m²</li>
+                                    </ul>
+                                </div>
+                                <div class="mt-4">
+                                    <h6 class="mb-3">Recent Predictions</h6>
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-primary">
+                                        <div class="me-3">
+                                            <span class="badge bg-success">Low</span>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Patient #1042</div>
+                                            <div class="small text-muted">2 hours ago</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-primary">
+                                        <div class="me-3">
+                                            <span class="badge bg-danger">High</span>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Patient #1039</div>
+                                            <div class="small text-muted">5 hours ago</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultSection" class="fade-in" style="display: none;">
+                <div class="row">
+                    <div class="col-lg-8 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-clipboard-check me-2 text-primary"></i>
+                                        Risk Assessment Results
+                                    </h5>
+                                    <button class="btn btn-sm btn-outline-secondary" id="backBtn">
+                                        <i class="bi bi-arrow-left me-2"></i>New Prediction
+                                    </button>
+                                </div>
+
+                                <div class="row align-items-center">
+                                    <div class="col-md-6 text-center mb-4 mb-md-0">
+                                        <div class="risk-indicator" id="riskIndicator">
+                                            <span id="riskScore">75%</span>
+                                        </div>
+                                        <h4 class="mt-4 mb-1" id="riskLabel">High Risk</h4>
+                                        <p class="text-muted" id="riskTimestamp">April 12, 2025 at 10:45 AM</p>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="card bg-opacity-10 border-0" id="recommendationCard">
+                                            <div class="card-body">
+                                                <h6 class="card-title"><i
+                                                        class="bi bi-clipboard2-pulse me-2"></i>Clinical Recommendation
+                                                </h6>
+                                                <p class="card-text" id="recommendationText">
+                                                    This patient is showing signs of elevated risk. Consider immediate
+                                                    clinical review and potential interventions based on their vital
+                                                    signs.
+                                                </p>
+                                                <button class="btn btn-sm btn-primary mt-2">
+                                                    <i class="bi bi-printer me-2"></i>Print Report
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h6 class="mb-3">Patient Vitals Summary</h6>
+                                <div class="row g-3" id="vitalsSummary">
+                                    <!-- Vitals summary will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex align-items-center mb-4">
+                                    <i class="bi bi-activity me-2 text-primary"></i>
+                                    Risk Factors
+                                </h5>
+                                <ul class="list-group list-group-flush" id="riskFactorsList">
+                                    <!-- Risk factors will be populated by JavaScript -->
+                                </ul>
+
+                                <div class="mt-4">
+                                    <h6 class="mb-3">Suggested Actions</h6>
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-primary">
+                                        <div class="me-3">
+                                            <i class="bi bi-graph-up text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Schedule follow-up monitoring</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-primary">
+                                        <div class="me-3">
+                                            <i class="bi bi-journal-medical text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Review medication regimen</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </form>
+    </div>
+    <script>
+        // DOM Elements
+        document.addEventListener('DOMContentLoaded', function () {
+            // Main UI elements
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const closeSidebar = document.getElementById('closeSidebar');
+            const themeToggle = document.getElementById('themeToggle');
+            const toggleIcon = themeToggle.querySelector('i');
+            const htmlElement = document.documentElement;
+            const predictionForm = document.getElementById('predictionForm');
+            const clearBtn = document.getElementById('clearBtn');
+            const inputSection = document.getElementById('inputSection');
+            const resultSection = document.getElementById('resultSection');
+            const backBtn = document.getElementById('backBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const riskIndicator = document.getElementById('riskIndicator');
+            const riskScore = document.getElementById('riskScore');
+            const riskLabel = document.getElementById('riskLabel');
+            const riskTimestamp = document.getElementById('riskTimestamp');
+            const recommendationText = document.getElementById('recommendationText');
+            const recommendationCard = document.getElementById('recommendationCard');
+            const vitalsSummary = document.getElementById('vitalsSummary');
+            const riskFactorsList = document.getElementById('riskFactorsList');
+
+            // Theme toggle functionality
+            themeToggle.addEventListener('click', function () {
+                const currentTheme = htmlElement.getAttribute('data-bs-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+                htmlElement.setAttribute('data-bs-theme', newTheme);
+
+                // Update icon
+                if (newTheme === 'light') {
+                    toggleIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+                } else {
+                    toggleIcon.classList.replace('bi-sun-fill', 'bi-moon-fill');
+                }
+
+                // Save theme preference
+                localStorage.setItem('mediPredict-theme', newTheme);
+
+                // Add rotation animation for theme toggle
+                themeToggle.classList.add('rotate');
+                setTimeout(() => themeToggle.classList.remove('rotate'), 500);
+            });
+
+            // Load saved theme preference
+            const savedTheme = localStorage.getItem('mediPredict-theme');
+            if (savedTheme) {
+                htmlElement.setAttribute('data-bs-theme', savedTheme);
+                if (savedTheme === 'light') {
+                    toggleIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+                }
+            }
+
+            // Mobile sidebar toggle
+            sidebarToggle.addEventListener('click', function () {
+                sidebar.classList.add('show');
+            });
+
+            closeSidebar.addEventListener('click', function () {
+                sidebar.classList.remove('show');
+            });
+
+            // Click outside to close sidebar on mobile
+            document.addEventListener('click', function (event) {
+                if (sidebar.classList.contains('show') &&
+                    !sidebar.contains(event.target) &&
+                    event.target !== sidebarToggle) {
+                    sidebar.classList.remove('show');
+                }
+            });
+
+            // Form submission handler
+            predictionForm.addEventListener('submit', function (e) {
+                e.preventDefault(); // Prevent default form submission
+
+                // Calculate derived values
+                calculateDerivedValues();
+
+                // Get all form values
+                const formData = new FormData(predictionForm);
+                const formValues = {};
+
+                for (const [key, value] of formData.entries()) {
+                    formValues[key] = parseFloat(value);
+                }
+
+                // Simulate a prediction (replace with actual API call in production)
+                const prediction = simulatePrediction(formValues);
+
+                // Display the results
+                displayResults(prediction, formValues);
+
+                // Hide input section, show result section
+                inputSection.style.opacity = 0;
+                setTimeout(() => {
+                    inputSection.style.display = 'none';
+                    resultSection.style.display = 'block';
+                    setTimeout(() => {
+                        resultSection.style.opacity = 1;
+                    }, 10);
+                }, 300);
+            });
+
+            // Calculate BMI, Pulse Pressure, and MAP automatically
+            function calculateDerivedValues() {
+                // Calculate BMI
+                const height = parseFloat(document.getElementById('height').value);
+                const weight = parseFloat(document.getElementById('weight').value);
+                if (height && weight) {
+                    const bmi = weight / (height * height);
+                    document.getElementById('bmi').value = bmi.toFixed(1);
+                }
+
+                // Calculate pulse pressure
+                const systolic = parseInt(document.getElementById('systolic_bp').value);
+                const diastolic = parseInt(document.getElementById('diastolic_bp').value);
+                if (systolic && diastolic) {
+                    const pulsePressure = systolic - diastolic;
+                    document.getElementById('pulse_pressure').value = pulsePressure;
+                }
+
+                // Calculate MAP (Mean Arterial Pressure)
+                if (systolic && diastolic) {
+                    const map = diastolic + (systolic - diastolic) / 3;
+                    document.getElementById('map').value = map.toFixed(1);
+                }
+            }
+
+            // Auto-calculate derived values when primary values change
+            document.getElementById('height').addEventListener('input', calculateDerivedValues);
+            document.getElementById('weight').addEventListener('input', calculateDerivedValues);
+            document.getElementById('systolic_bp').addEventListener('input', calculateDerivedValues);
+            document.getElementById('diastolic_bp').addEventListener('input', calculateDerivedValues);
+
+            // Return to input form
+            backBtn.addEventListener('click', function () {
+                resultSection.style.opacity = 0;
+                setTimeout(() => {
+                    resultSection.style.display = 'none';
+                    inputSection.style.display = 'block';
+                    setTimeout(() => {
+                        inputSection.style.opacity = 1;
+                    }, 10);
+                }, 300);
+            });
+
+            // Clear form
+            clearBtn.addEventListener('click', function () {
+                predictionForm.reset();
+
+                // Set default values
+                document.getElementById('heart_rate').value = 60;
+                document.getElementById('resp_rate').value = 12;
+                document.getElementById('body_temp').value = 36.0;
+                document.getElementById('oxygen_sat').value = 95.0;
+                document.getElementById('systolic_bp').value = 110;
+                document.getElementById('diastolic_bp').value = 70;
+                document.getElementById('age').value = 18;
+                document.getElementById('gender').value = 0;
+                document.getElementById('weight').value = 50.0;
+                document.getElementById('height').value = 1.5;
+                document.getElementById('hrv').value = 0.08;
+                document.getElementById('pulse_pressure').value = 30;
+                document.getElementById('bmi').value = 20.3;
+                document.getElementById('map').value = 88.7;
+
+                // Add shake animation
+                const formElements = predictionForm.querySelectorAll('input, select');
+                formElements.forEach(el => {
+                    el.classList.add('shake');
+                    setTimeout(() => el.classList.remove('shake'), 500);
+                });
+            });
+
+            // Refresh button
+            refreshBtn.addEventListener('click', function () {
+                // Add rotation animation
+                refreshBtn.querySelector('i').classList.add('rotate');
+                setTimeout(() => refreshBtn.querySelector('i').classList.remove('rotate'), 500);
+
+                // Reset to input form if on results page
+                if (resultSection.style.display !== 'none') {
+                    backBtn.click();
+                }
+
+                // Otherwise just reload the page
+                else {
+                    location.reload();
+                }
+            });
+
+            // Hover effects for cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function () {
+                    this.classList.add('card-hover');
+                });
+                card.addEventListener('mouseleave', function () {
+                    this.classList.remove('card-hover');
+                });
+            });
+
+            // Simulate prediction based on form values
+            function simulatePrediction(formValues) {
+                // This is a simplified risk calculation for demo purposes
+                // In a real app, this would be an API call to your Flask backend
+
+                let riskScore = 0;
+                const riskFactors = [];
+
+                // Check heart rate
+                if (formValues.heart_rate < 60 || formValues.heart_rate > 100) {
+                    riskScore += 15;
+                    riskFactors.push({
+                        name: "Abnormal Heart Rate",
+                        value: `${formValues.heart_rate} BPM`,
+                        normal: "60-100 BPM",
+                        icon: "bi-heart-pulse"
+                    });
+                }
+
+                // Check blood pressure
+                if (formValues.systolic_bp > 140 || formValues.systolic_bp < 90 ||
+                    formValues.diastolic_bp > 90 || formValues.diastolic_bp < 60) {
+                    riskScore += 20;
+                    riskFactors.push({
+                        name: "Abnormal Blood Pressure",
+                        value: `${formValues.systolic_bp}/${formValues.diastolic_bp} mmHg`,
+                        normal: "90-140/60-90 mmHg",
+                        icon: "bi-activity"
+                    });
+                }
+
+                // Check oxygen saturation
+                if (formValues.oxygen_sat < 95) {
+                    riskScore += 25;
+                    riskFactors.push({
+                        name: "Low Oxygen Saturation",
+                        value: `${formValues.oxygen_sat}%`,
+                        normal: "95-100%",
+                        icon: "bi-lungs"
+                    });
+                }
+
+                // Check temperature
+                if (formValues.body_temp > 38 || formValues.body_temp < 36) {
+                    riskScore += 15;
+                    riskFactors.push({
+                        name: "Abnormal Body Temperature",
+                        value: `${formValues.body_temp}°C`,
+                        normal: "36-38°C",
+                        icon: "bi-thermometer-half"
+                    });
+                }
+
+                // Check respiratory rate
+                if (formValues.resp_rate > 20 || formValues.resp_rate < 12) {
+                    riskScore += 15;
+                    riskFactors.push({
+                        name: "Abnormal Respiratory Rate",
+                        value: `${formValues.resp_rate} breaths/min`,
+                        normal: "12-20 breaths/min",
+                        icon: "bi-lungs"
+                    });
+                }
+
+                // Check BMI
+                if (formValues.bmi < 18.5 || formValues.bmi > 30) {
+                    riskScore += 10;
+                    riskFactors.push({
+                        name: "Abnormal BMI",
+                        value: `${formValues.bmi} kg/m²`,
+                        normal: "18.5-24.9 kg/m²",
+                        icon: "bi-person"
+                    });
+                }
+
+                // Age factor
+                if (formValues.age > 65) {
+                    riskScore += 10;
+                    riskFactors.push({
+                        name: "Age Factor",
+                        value: `${formValues.age} years`,
+                        normal: "N/A",
+                        icon: "bi-calendar"
+                    });
+                }
+
+                // Cap risk score at 100%
+                riskScore = Math.min(100, riskScore);
+
+                // If no risk factors, add a healthy note
+                if (riskFactors.length === 0) {
+                    riskFactors.push({
+                        name: "All Vitals Normal",
+                        value: "Within healthy ranges",
+                        normal: "N/A",
+                        icon: "bi-check-circle"
+                    });
+                }
+
+                return {
+                    score: riskScore,
+                    factors: riskFactors,
+                    timestamp: new Date()
+                };
+            }
+
+            // Display the prediction results
+            function displayResults(prediction, formValues) {
+                // Set risk score and indicator
+                const score = prediction.score;
+                riskScore.textContent = `${score}%`;
+                riskIndicator.style.setProperty('--risk-percent', `${score}%`);
+
+                // Set risk label based on score
+                if (score < 30) {
+                    riskLabel.textContent = "Low Risk";
+                    riskLabel.className = "mt-4 mb-1 risk-low";
+                    recommendationCard.className = "card bg-success bg-opacity-10 border-0";
+                    recommendationText.textContent = "This patient is showing low risk indicators. Regular monitoring is recommended.";
+                } else if (score < 70) {
+                    riskLabel.textContent = "Medium Risk";
+                    riskLabel.className = "mt-4 mb-1 risk-medium";
+                    recommendationCard.className = "card bg-warning bg-opacity-10 border-0";
+                    recommendationText.textContent = "This patient is showing moderate risk. Consider additional monitoring and review medication.";
+                } else {
+                    riskLabel.textContent = "High Risk";
+                    riskLabel.className = "mt-4 mb-1 risk-high";
+                    recommendationCard.className = "card bg-danger bg-opacity-10 border-0";
+                    recommendationText.textContent = "This patient is showing signs of elevated risk. Consider immediate clinical review and potential interventions based on their vital signs.";
+                }
+
+                // Set timestamp
+                const options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+                riskTimestamp.textContent = prediction.timestamp.toLocaleDateString('en-US', options);
+
+                // Populate vitals summary
+                vitalsSummary.innerHTML = '';
+                const vitalsToDisplay = [
+                    { name: "Heart Rate", value: `${formValues.heart_rate} BPM`, icon: "bi-heart-pulse" },
+                    { name: "Blood Pressure", value: `${formValues.systolic_bp}/${formValues.diastolic_bp} mmHg`, icon: "bi-activity" },
+                    { name: "Oxygen", value: `${formValues.oxygen_sat}%`, icon: "bi-lungs" },
+                    { name: "Temperature", value: `${formValues.body_temp}°C`, icon: "bi-thermometer-half" },
+                    { name: "BMI", value: `${formValues.bmi} kg/m²`, icon: "bi-person" },
+                    { name: "Respiratory Rate", value: `${formValues.resp_rate} breaths/min`, icon: "bi-wind" }
+                ];
+
+                vitalsToDisplay.forEach(vital => {
+                    const vitalCol = document.createElement('div');
+                    vitalCol.className = "col-md-4 col-6";
+                    vitalCol.innerHTML = `
+        <div class="card bg-primary bg-opacity-10 border-0">
+            <div class="card-body py-2">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="${vital.icon} text-primary fs-4"></i>
+                    </div>
+                    <div>
+                        <div class="small text-muted">${vital.name}</div>
+                        <div class="fw-medium">${vital.value}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+                    vitalsSummary.appendChild(vitalCol);
+                });
+
+                // Populate risk factors
+                riskFactorsList.innerHTML = '';
+                prediction.factors.forEach(factor => {
+                    const li = document.createElement('li');
+                    li.className = "list-group-item border-0 px-0";
+                    li.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <div class="me-3">
+                    <i class="${factor.icon} fs-4 text-primary"></i>
+                </div>
+                <div>
+                    <div class="fw-medium">${factor.name}</div>
+                    <div class="small text-muted">
+                        Value: ${factor.value} <br>
+                        Normal Range: ${factor.normal}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+                    riskFactorsList.appendChild(li);
+                });
+            }
+            // Form validation configuration
+            const validationRules = {
+                heart_rate: { min: 30, max: 220, message: "Heart rate should be between 30-220 BPM" },
+                resp_rate: { min: 8, max: 40, message: "Respiratory rate should be between 8-40 breaths/min" },
+                body_temp: { min: 34, max: 42, message: "Body temperature should be between 34-42°C" },
+                oxygen_sat: { min: 70, max: 100, message: "Oxygen saturation should be between 70-100%" },
+                systolic_bp: { min: 70, max: 240, message: "Systolic BP should be between 70-240 mmHg" },
+                diastolic_bp: { min: 40, max: 140, message: "Diastolic BP should be between 40-140 mmHg" },
+                age: { min: 0, max: 120, message: "Age should be between 0-120 years" },
+                gender: { values: [0, 1], message: "Gender should be 0 (Male) or 1 (Female)" },
+                weight: { min: 2, max: 300, message: "Weight should be between 2-300 kg" },
+                height: { min: 0.5, max: 2.5, message: "Height should be between 0.5-2.5 m" },
+                hrv: { min: 0.01, max: 0.5, message: "HRV should be between 0.01-0.5" },
+                pulse_pressure: { min: 20, max: 100, message: "Pulse pressure should be between 20-100" },
+                bmi: { min: 10, max: 50, message: "BMI should be between 10-50 kg/m²" },
+                map: { min: 50, max: 160, message: "MAP should be between 50-160" }
+            };
+
+            // Execute validation setup when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function () {
+                const predictionForm = document.getElementById('predictionForm');
+                const inputs = predictionForm.querySelectorAll('input, select');
+                const systolicInput = document.getElementById('systolic_bp');
+                const diastolicInput = document.getElementById('diastolic_bp');
+
+                // Add validation event listeners to all input fields
+                inputs.forEach(input => {
+                    // Skip derived values that are calculated automatically
+                    if (!['bmi', 'pulse_pressure', 'map'].includes(input.id)) {
+                        input.addEventListener('input', function () {
+                            validateInput(this);
+                        });
+
+                        input.addEventListener('blur', function () {
+                            validateInput(this, true);
+                        });
+                    }
+                });
+
+                // Add custom validation for systolic/diastolic relationship
+                [systolicInput, diastolicInput].forEach(input => {
+                    input.addEventListener('input', function () {
+                        const systolic = parseFloat(systolicInput.value);
+                        const diastolic = parseFloat(diastolicInput.value);
+
+                        if (!isNaN(systolic) && !isNaN(diastolic) && systolic <= diastolic) {
+                            setInvalidState(systolicInput, "Systolic BP must be greater than diastolic BP");
+                            setInvalidState(diastolicInput, "Diastolic BP must be less than systolic BP");
+                        } else {
+                            // Still validate each field individually
+                            validateInput(systolicInput);
+                            validateInput(diastolicInput);
+                        }
+                    });
+                });
+
+                // Modify form submission to check all validations first
+                predictionForm.addEventListener('submit', function (e) {
+                    let isValid = true;
+
+                    // Validate all inputs before submission
+                    inputs.forEach(input => {
+                        // Skip derived values
+                        if (!['bmi', 'pulse_pressure', 'map'].includes(input.id)) {
+                            if (!validateInput(input, true)) {
+                                isValid = false;
+                            }
+                        }
+                    });
+
+                    // Check systolic/diastolic relationship
+                    const systolic = parseFloat(systolicInput.value);
+                    const diastolic = parseFloat(diastolicInput.value);
+                    if (!isNaN(systolic) && !isNaN(diastolic) && systolic <= diastolic) {
+                        setInvalidState(systolicInput, "Systolic BP must be greater than diastolic BP");
+                        setInvalidState(diastolicInput, "Diastolic BP must be less than systolic BP");
+                        isValid = false;
+                    }
+
+                    // Prevent submission if not valid
+                    if (!isValid) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Show error alert
+                        showValidationErrorAlert();
+
+                        // Scroll to the first invalid input
+                        const firstInvalid = predictionForm.querySelector('.is-invalid');
+                        if (firstInvalid) {
+                            firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            firstInvalid.focus();
+                        }
+                    }
+                });
+            });
+
+            // Function to validate a single input
+            function validateInput(input, showFeedback = false) {
+                const fieldId = input.id;
+                const value = parseFloat(input.value);
+
+                // Clear previous validation state
+                clearValidationState(input);
+
+                // Check if field has validation rules
+                if (!validationRules[fieldId]) {
+                    return true;
+                }
+
+                const rules = validationRules[fieldId];
+
+                // Validation for empty values
+                if (input.value.trim() === '') {
+                    if (showFeedback) {
+                        setInvalidState(input, "This field is required");
+                    }
+                    return false;
+                }
+
+                // Validation for numeric values
+                if (isNaN(value) && fieldId !== 'gender') {
+                    if (showFeedback) {
+                        setInvalidState(input, "Please enter a valid number");
+                    }
+                    return false;
+                }
+
+                // Range validation
+                if (rules.min !== undefined && rules.max !== undefined) {
+                    if (value < rules.min || value > rules.max) {
+                        if (showFeedback) {
+                            setInvalidState(input, rules.message);
+                        }
+                        return false;
+                    }
+                }
+
+                // Specific values validation (e.g., for gender)
+                if (rules.values && !rules.values.includes(parseInt(input.value))) {
+                    if (showFeedback) {
+                        setInvalidState(input, rules.message);
+                    }
+                    return false;
+                }
+
+                // If we get here, validation passed
+                if (showFeedback) {
+                    setValidState(input);
+                }
+                return true;
+            }
+
+            // Set invalid state with feedback
+            function setInvalidState(input, message) {
+                input.classList.add('is-invalid');
+                input.classList.remove('is-valid');
+
+                // Create or update feedback element
+                let feedback = input.nextElementSibling;
+                if (!feedback || !feedback.classList.contains('invalid-feedback')) {
+                    feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    input.parentNode.insertBefore(feedback, input.nextSibling);
+                }
+                feedback.textContent = message;
+            }
+
+            // Set valid state
+            function setValidState(input) {
+                input.classList.add('is-valid');
+                input.classList.remove('is-invalid');
+
+                // Remove any existing feedback
+                const feedback = input.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.textContent = '';
+                }
+            }
+
+            // Clear validation state
+            function clearValidationState(input) {
+                input.classList.remove('is-valid', 'is-invalid');
+
+                // Remove any existing feedback
+                const feedback = input.nextElementSibling;
+                if (feedback && feedback.classList.contains('invalid-feedback')) {
+                    feedback.textContent = '';
+                }
+            }
+
+            // Show validation error alert
+            function showValidationErrorAlert() {
+                // Check if alert already exists
+                let alertContainer = document.getElementById('validationAlert');
+
+                if (!alertContainer) {
+                    // Create alert
+                    alertContainer = document.createElement('div');
+                    alertContainer.id = 'validationAlert';
+                    alertContainer.className = 'alert alert-danger alert-dismissible fade show mt-3 mb-0';
+                    alertContainer.innerHTML = `
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <strong>Validation Error!</strong> Please check the form for errors.
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+`;
+
+                    // Insert at top of form
+                    const predictionForm = document.getElementById('predictionForm');
+                    predictionForm.insertBefore(alertContainer, predictionForm.firstChild);
+
+                    // Auto dismiss after 5 seconds
+                    setTimeout(() => {
+                        alertContainer.classList.add('fade');
+                        setTimeout(() => {
+                            if (alertContainer.parentNode) {
+                                alertContainer.parentNode.removeChild(alertContainer);
+                            }
+                        }, 150);
+                    }, 5000);
+                }
+
+                // Add attention-grabbing shake animation
+                alertContainer.classList.add('shake');
+                setTimeout(() => alertContainer.classList.remove('shake'), 500);
+            }
+
+            // Updated calculateDerivedValues function with validation
+            function calculateDerivedValues() {
+                // Calculate BMI
+                const height = parseFloat(document.getElementById('height').value);
+                const weight = parseFloat(document.getElementById('weight').value);
+                const bmiInput = document.getElementById('bmi');
+
+                if (height && weight && !isNaN(height) && !isNaN(weight) && height > 0) {
+                    const bmi = weight / (height * height);
+                    bmiInput.value = bmi.toFixed(1);
+
+                    // Validate BMI is in reasonable range
+                    if (bmi < 10 || bmi > 50) {
+                        setInvalidState(bmiInput, "BMI value is outside normal range. Check height/weight.");
+                    } else {
+                        clearValidationState(bmiInput);
+                    }
+                }
+
+                // Calculate pulse pressure
+                const systolic = parseInt(document.getElementById('systolic_bp').value);
+                const diastolic = parseInt(document.getElementById('diastolic_bp').value);
+                const pulseInput = document.getElementById('pulse_pressure');
+
+                if (systolic && diastolic && !isNaN(systolic) && !isNaN(diastolic)) {
+                    const pulsePressure = systolic - diastolic;
+                    pulseInput.value = pulsePressure;
+
+                    // Validate pulse pressure is reasonable
+                    if (pulsePressure <= 0 || pulsePressure > 100) {
+                        setInvalidState(pulseInput, "Pulse pressure is unusual. Check blood pressure values.");
+                    } else {
+                        clearValidationState(pulseInput);
+                    }
+                }
+
+                // Calculate MAP (Mean Arterial Pressure)
+                const mapInput = document.getElementById('map');
+
+                if (systolic && diastolic && !isNaN(systolic) && !isNaN(diastolic)) {
+                    const map = diastolic + (systolic - diastolic) / 3;
+                    mapInput.value = map.toFixed(1);
+
+                    // Validate MAP is reasonable
+                    if (map < 50 || map > 160) {
+                        setInvalidState(mapInput, "MAP is outside normal range. Check blood pressure values.");
+                    } else {
+                        clearValidationState(mapInput);
+                    }
+                }
+            }
+
+            // Initial call to calculate derived values when page loads
+            calculateDerivedValues();
+        });
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

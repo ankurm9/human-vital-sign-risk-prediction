@@ -1,13 +1,743 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-bs-theme="dark">
+
 <head>
-    <title>Prediction Result</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediPredict - Prediction Results</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --sidebar-width: 280px;
+            --border-radius: 12px;
+            --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        body {
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bs-body-bg);
+            transition: background-color 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            z-index: 1030;
+            background-color: rgba(0, 0, 0, 0.03);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        [data-bs-theme="light"] .sidebar {
+            background-color: rgba(255, 255, 255, 0.7);
+            border-right: 1px solid rgba(0, 0, 0, 0.08);
+        }
+
+        .sidebar-logo {
+            color: var(--primary-color);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+
+        .nav-link {
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+            color: var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .nav-link i {
+            width: 24px;
+            text-align: center;
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar {
+                position: fixed;
+                left: calc(-1 * var(--sidebar-width));
+                height: 100vh;
+            }
+
+            .sidebar.show {
+                left: 0;
+            }
+
+            .content-wrapper {
+                width: 100%;
+            }
+        }
+
+        .content-wrapper {
+            flex: 1;
+            min-width: 0;
+            padding: 1.5rem;
+        }
+
+        .content-header {
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            border: none;
+            border-radius: var(--border-radius);
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .btn {
+            border-radius: var(--border-radius);
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+
+        .risk-indicator {
+            height: 150px;
+            width: 150px;
+            border-radius: 50%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            position: relative;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .risk-indicator::before {
+            content: '';
+            position: absolute;
+            height: 120px;
+            width: 120px;
+            border-radius: 50%;
+            background-color: var(--bs-body-bg);
+        }
+
+        .risk-indicator span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .risk-high {
+            color: #dc3545;
+            background: conic-gradient(#dc3545 calc(var(--risk-percent) * 1%), transparent 0);
+        }
+
+        .risk-medium {
+            color: #fd7e14;
+            background: conic-gradient(#fd7e14 calc(var(--risk-percent) * 1%), transparent 0);
+        }
+
+        .risk-low {
+            color: #198754;
+            background: conic-gradient(#198754 calc(var(--risk-percent) * 1%), transparent 0);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        [data-bs-theme="light"] .theme-toggle {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-bs-theme="light"] .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(155, 155, 155, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(155, 155, 155, 0.8);
+        }
+
+        .risk-factor-item {
+            padding: 0.75rem 1rem;
+            border-left: 4px solid;
+            margin-bottom: 0.5rem;
+            border-radius: var(--border-radius);
+            background-color: rgba(var(--bs-primary-rgb), 0.05);
+        }
+
+        .risk-factor-high {
+            border-left-color: #dc3545;
+        }
+
+        .risk-factor-medium {
+            border-left-color: #fd7e14;
+        }
+
+        .risk-factor-low {
+            border-left-color: #198754;
+        }
+
+        .vital-badge {
+            border-radius: var(--border-radius);
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .vital-badge i {
+            margin-right: 0.5rem;
+            font-size: 1.25rem;
+        }
+
+        .vital-badge-normal {
+            background-color: rgba(25, 135, 84, 0.1);
+            color: #198754;
+        }
+
+        .vital-badge-warning {
+            background-color: rgba(253, 126, 20, 0.1);
+            color: #fd7e14;
+        }
+
+        .vital-badge-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+        }
+    </style>
 </head>
-<body class="container py-5">
-    <h2>Prediction Result</h2>
-    <p class="lead">Risk Score: <strong>{{ prediction }}</strong></p>
-    <p class="lead">Risk Level: <strong>{{ risk_label }}</strong></p>
-    <a href="/" class="btn btn-primary">Back</a>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <div class="sidebar p-4" id="sidebar">
+            <div class="d-flex align-items-center mb-5">
+                <div class="sidebar-logo">
+                    <i class="bi bi-heart-pulse-fill me-2"></i>MediPredict
+                </div>
+                <button class="btn btn-sm btn-link ms-auto d-lg-none" id="closeSidebar">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <ul class="nav flex-column mb-5 gap-1">
+                <li class="nav-item">
+                    <a href="/" class="nav-link active">
+                        <i class="bi bi-grid-1x2-fill me-3"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-clipboard2-pulse-fill me-3"></i>
+                        Patient Records
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-graph-up-arrow me-3"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-person-fill me-3"></i>
+                        User Profile
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-gear-fill me-3"></i>
+                        Settings
+                    </a>
+                </li>
+            </ul>
+
+            <div class="mt-auto">
+                <div class="d-flex align-items-center">
+                    <span class="fs-6 fw-medium me-3">Theme</span>
+                    <div class="theme-toggle ms-auto" id="themeToggle">
+                        <i class="bi bi-moon-fill"></i>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-top">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-shrink-0">
+                            <div class="avatar bg-primary bg-opacity-10 text-primary rounded-circle p-2">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fw-medium">Dr. Smith</div>
+                            <div class="small text-muted">Medical Staff</div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots-vertical"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Profile</a></li>
+                                <li><a class="dropdown-item" href="#">Settings</a></li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li><a class="dropdown-item" href="#">Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content-wrapper">
+            <div class="d-flex align-items-center mb-4 content-header">
+                <button class="btn btn-outline-secondary me-3 d-lg-none" id="sidebarToggle">
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h2 class="mb-1">Prediction Results</h2>
+                    <p class="text-muted mb-0">Health risk assessment based on submitted vitals</p>
+                </div>
+                <div class="ms-auto d-flex">
+                    <a href="/" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-arrow-left me-2"></i>New Prediction
+                    </a>
+                    <button class="btn btn-primary" id="printBtn">
+                        <i class="bi bi-printer me-2"></i>Print Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultSection" class="fade-in">
+                <div class="row">
+                    <div class="col-lg-8 mb-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between mb-4">
+                                    <h5 class="card-title mb-0">
+                                        <i class="bi bi-clipboard-check me-2 text-primary"></i>
+                                        Risk Assessment Results
+                                    </h5>
+                                </div>
+
+                                <div class="row align-items-center">
+                                    <div class="col-md-6 text-center mb-4 mb-md-0">
+                                        {% set risk_percent = prediction * 100 %}
+                                        {% if prediction >= 0.7 %}
+                                        {% set risk_class = "risk-high" %}
+                                        {% elif prediction >= 0.3 %}
+                                        {% set risk_class = "risk-medium" %}
+                                        {% else %}
+                                        {% set risk_class = "risk-low" %}
+                                        {% endif %}
+
+                                        <div class="risk-indicator {{ risk_class }}"
+                                            style="--risk-percent: {{ risk_percent }}">
+                                            <span>{{ risk_percent|round }}%</span>
+                                        </div>
+                                        <h4 class="mt-4 mb-1">{{ risk_label }}</h4>
+                                        <p class="text-muted">{{ now.strftime('%B %d, %Y at %I:%M %p') }}</p>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div
+                                            class="card bg-opacity-10 border-0 
+                                        {% if prediction >= 0.7 %}bg-danger{% elif prediction >= 0.3 %}bg-warning{% else %}bg-success{% endif %}">
+                                            <div class="card-body">
+                                                <h6 class="card-title"><i
+                                                        class="bi bi-clipboard2-pulse me-2"></i>Clinical Recommendation
+                                                </h6>
+                                                <p class="card-text" id="recommendationText">
+                                                    {% if prediction >= 0.7 %}
+                                                    This patient is showing signs of elevated risk. Consider immediate
+                                                    clinical review and further evaluation of their vital signs.
+                                                    {% elif prediction >= 0.3 %}
+                                                    This patient shows moderate risk. Monitor vital signs and consider
+                                                    follow-up assessment within the next few days.
+                                                    {% else %}
+                                                    This patient's vital signs indicate low risk. Routine follow-up is
+                                                    recommended according to standard protocols.
+                                                    {% endif %}
+                                                </p>
+                                                <button class="btn btn-sm btn-primary mt-2" id="emailReport">
+                                                    <i class="bi bi-envelope me-2"></i>Email Report
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <h6 class="mb-3">Patient Vitals Summary</h6>
+                                <div class="row g-3" id="vitalsSummary">
+                                    <div class="col-md-4">
+                                        <div class="vital-badge vital-badge-normal">
+                                            <i class="bi bi-heart-pulse"></i>
+                                            <div>
+                                                <div class="small text-muted">Heart Rate</div>
+                                                <div class="fw-medium">72 BPM</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="vital-badge vital-badge-normal">
+                                            <i class="bi bi-lungs"></i>
+                                            <div>
+                                                <div class="small text-muted">Respiratory Rate</div>
+                                                <div class="fw-medium">16 BPM</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="vital-badge vital-badge-normal">
+                                            <i class="bi bi-thermometer-half"></i>
+                                            <div>
+                                                <div class="small text-muted">Temperature</div>
+                                                <div class="fw-medium">37.1 °C</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="vital-badge vital-badge-normal">
+                                            <i class="bi bi-droplet"></i>
+                                            <div>
+                                                <div class="small text-muted">O₂ Saturation</div>
+                                                <div class="fw-medium">97%</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="vital-badge vital-badge-warning">
+                                            <i class="bi bi-activity"></i>
+                                            <div>
+                                                <div class="small text-muted">Blood Pressure</div>
+                                                <div class="fw-medium">138/85 mmHg</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="vital-badge vital-badge-normal">
+                                            <i class="bi bi-calculator"></i>
+                                            <div>
+                                                <div class="small text-muted">BMI</div>
+                                                <div class="fw-medium">24.3</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex align-items-center mb-4">
+                                    <i class="bi bi-activity me-2 text-primary"></i>
+                                    Trend Analysis
+                                </h5>
+                                <div class="alert alert-primary">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Patient risk has <strong>{{ "increased" if prediction > 0.5 else "decreased"
+                                        }}</strong>
+                                    since last assessment.
+                                </div>
+
+                                <div class="text-center p-3">
+                                    <div class="placeholder bg-secondary"
+                                        style="width: 100%; height: 200px; border-radius: var(--border-radius);">
+                                        <div class="d-flex justify-content-center align-items-center h-100">
+                                            <i class="bi bi-graph-up-arrow me-2 fs-4"></i>
+                                            <span>Risk Trend Chart</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex align-items-center mb-4">
+                                    <i class="bi bi-exclamation-triangle me-2 text-primary"></i>
+                                    Risk Factors
+                                </h5>
+                                <div id="riskFactorsList">
+                                    {% if prediction >= 0.7 %}
+                                    <div class="risk-factor-item risk-factor-high">
+                                        <h6 class="mb-1">Elevated Blood Pressure</h6>
+                                        <p class="small mb-0">138/85 mmHg indicates pre-hypertension</p>
+                                    </div>
+                                    <div class="risk-factor-item risk-factor-high">
+                                        <h6 class="mb-1">High Heart Rate Variability</h6>
+                                        <p class="small mb-0">HRV is abnormally elevated</p>
+                                    </div>
+                                    <div class="risk-factor-item risk-factor-medium">
+                                        <h6 class="mb-1">MAP Concerns</h6>
+                                        <p class="small mb-0">Mean Arterial Pressure is slightly elevated</p>
+                                    </div>
+                                    {% elif prediction >= 0.3 %}
+                                    <div class="risk-factor-item risk-factor-medium">
+                                        <h6 class="mb-1">Slightly Elevated Blood Pressure</h6>
+                                        <p class="small mb-0">Blood pressure is above optimal range</p>
+                                    </div>
+                                    <div class="risk-factor-item risk-factor-medium">
+                                        <h6 class="mb-1">Age Factor</h6>
+                                        <p class="small mb-0">Age-related risk factors present</p>
+                                    </div>
+                                    {% else %}
+                                    <div class="risk-factor-item risk-factor-low">
+                                        <h6 class="mb-1">All Vitals Within Normal Range</h6>
+                                        <p class="small mb-0">No significant risk factors identified</p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mt-4">
+                                    <h6 class="mb-3">Suggested Actions</h6>
+                                    {% if prediction >= 0.7 %}
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-danger">
+                                        <div class="me-3">
+                                            <i class="bi bi-person-vcard text-danger"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Schedule clinical consultation</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-danger">
+                                        <div class="me-3">
+                                            <i class="bi bi-prescription2 text-danger"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Review medication regimen</div>
+                                        </div>
+                                    </div>
+                                    {% elif prediction >= 0.3 %}
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-warning">
+                                        <div class="me-3">
+                                            <i class="bi bi-calendar-check text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Schedule follow-up appointment</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-warning">
+                                        <div class="me-3">
+                                            <i class="bi bi-clipboard2-pulse text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Monitor vitals weekly</div>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-success">
+                                        <div class="me-3">
+                                            <i class="bi bi-calendar-date text-success"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Routine follow-up in 6 months</div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2 p-2 rounded bg-opacity-10 bg-success">
+                                        <div class="me-3">
+                                            <i class="bi bi-heart-pulse text-success"></i>
+                                        </div>
+                                        <div>
+                                            <div class="small fw-medium">Continue health maintenance</div>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title d-flex align-items-center mb-4">
+                                    <i class="bi bi-file-earmark-medical me-2 text-primary"></i>
+                                    Report Actions
+                                </h5>
+                                <div class="d-grid gap-2">
+                                    <button class="btn btn-outline-primary">
+                                        <i class="bi bi-save me-2"></i>Save to Patient Record
+                                    </button>
+                                    <button class="btn btn-outline-primary">
+                                        <i class="bi bi-share me-2"></i>Share with Care Team
+                                    </button>
+                                    <button class="btn btn-outline-primary">
+                                        <i class="bi bi-file-earmark-pdf me-2"></i>Export as PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const themeToggle = document.getElementById('themeToggle');
+        const toggleIcon = themeToggle.querySelector('i');
+        const htmlElement = document.documentElement;
+        const printBtn = document.getElementById('printBtn');
+        const emailReport = document.getElementById('emailReport');
+
+        // Theme toggle functionality
+        themeToggle.addEventListener('click', function () {
+            const currentTheme = htmlElement.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            htmlElement.setAttribute('data-bs-theme', newTheme);
+
+            // Update icon
+            if (newTheme === 'light') {
+                toggleIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+            } else {
+                toggleIcon.classList.replace('bi-sun-fill', 'bi-moon-fill');
+            }
+
+            // Save theme preference
+            localStorage.setItem('mediPredict-theme', newTheme);
+        });
+
+        // Load saved theme preference
+        document.addEventListener('DOMContentLoaded', function () {
+            const savedTheme = localStorage.getItem('mediPredict-theme');
+            if (savedTheme) {
+                htmlElement.setAttribute('data-bs-theme', savedTheme);
+                if (savedTheme === 'light') {
+                    toggleIcon.classList.replace('bi-moon-fill', 'bi-sun-fill');
+                }
+            }
+        });
+
+        // Mobile sidebar toggle
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', function () {
+                sidebar.classList.add('show');
+            });
+        }
+
+        if (closeSidebar) {
+            closeSidebar.addEventListener('click', function () {
+                sidebar.classList.remove('show');
+            });
+        }
+
+        // Click outside to close sidebar on mobile
+        document.addEventListener('click', function (event) {
+            if (sidebar.classList.contains('show') &&
+                !sidebar.contains(event.target) &&
+                event.target !== sidebarToggle) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Print report
+        if (printBtn) {
+            printBtn.addEventListener('click', function () {
+                window.print();
+            });
+        }
+
+        // Email report functionality
+        if (emailReport) {
+            emailReport.addEventListener('click', function () {
+                alert('Report will be emailed to the care team.');
+            });
+        }
+
+        // Add animations for better user experience
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', function () {
+                this.classList.add('card-hover');
+            });
+
+            card.addEventListener('mouseleave', function () {
+                this.classList.remove('card-hover');
+            });
+        });
+
+    </script>
 </body>
+
 </html>
